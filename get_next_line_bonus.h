@@ -6,7 +6,7 @@
 /*   By: amassias <amassias@student.42lehavre.fr    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/18 04:47:38 by amassias          #+#    #+#             */
-/*   Updated: 2023/11/09 22:48:50 by amassias         ###   ########.fr       */
+/*   Updated: 2023/11/09 22:53:35 by amassias         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 # define FD_LIMIT 1024
 
 # ifndef BUFFER_SIZE
-#  define BUFFER_SIZE 1024
+#  define BUFFER_SIZE 4096
 # endif
 
 char	*get_next_line(
