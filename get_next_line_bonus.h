@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   get_next_line_bonus.h                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: amassias <amassias@student.42.fr>          +#+  +:+       +#+        */
+/*   By: amassias <amassias@student.42lehavre.fr    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/18 04:47:38 by amassias          #+#    #+#             */
-/*   Updated: 2023/10/18 06:45:02 by amassias         ###   ########.fr       */
+/*   Updated: 2023/11/09 22:48:50 by amassias         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,29 @@
 
 # include <stdlib.h>
 
-char	*get_next_line(int fd);
-void	*ft_memcpy(void *dst, const void *src, size_t n);
+# define FD_LIMIT 1024
+
+# ifndef BUFFER_SIZE
+#  define BUFFER_SIZE 1024
+# endif
+
+char	*get_next_line(
+			int fd);
+
+void	*ft_memcpy(
+			void *dst,
+			const void *src,
+			size_t n);
+
+char	*ft_strchr(
+			const char *str,
+			char c);
+
+void	ft_strcat(
+			char **dst_ptr,
+			const char *src);
+
+size_t	ft_strlen(
+			const char *str);
 
 #endif

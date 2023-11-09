@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   get_next_line.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: amassias <amassias@student.42.fr>          +#+  +:+       +#+        */
+/*   By: amassias <amassias@student.42lehavre.fr    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/30 06:46:18 by amassias          #+#    #+#             */
-/*   Updated: 2023/10/18 06:42:17 by amassias         ###   ########.fr       */
+/*   Updated: 2023/11/09 22:49:15 by amassias         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,103 +14,95 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 
-typedef struct s_buffer {
-	unsigned long	size;
-	struct s_buffer	*next;
-	char			data[BUFFER_SIZE];
-}	t_buffer;
-
-void	*free_buffer(t_buffer **buffer_ptr)
+static char	*_preprocess_buffer(
+				char *buffer)
 {
-	t_buffer	*itr;
-	t_buffer	*buffer;
+	size_t	i;
+	char	*line;
 
-	itr = *buffer_ptr;
-	while (itr)
-	{
-		buffer = itr;
-		itr = buffer->next;
-		free(buffer);
-	}
-	*buffer_ptr = NULL;
-	return (NULL);
-}
-
-unsigned long	compute_final_size(t_buffer *buffer)
-{
-	unsigned long	size;
-
-	size = 0;
-	while (buffer)
-	{
-		size += buffer->size;
-		buffer = buffer->next;
-	}
-	return (size);
-}
-
-char	*compile(t_buffer *buffer)
-{
-	t_buffer		*itr;
-	char			*line;
-	unsigned long	size;
-
-	itr = buffer;
-	size = compute_final_size(buffer);
-	if (size == 0)
-		return ((char *) free_buffer(&buffer));
-	line = (char *) malloc(size + 1);
-	if (!line)
-		return ((char *) free_buffer(&buffer));
-	line[size] = '\0';
-	itr = buffer;
-	size = 0;
-	while (itr)
-	{
-		ft_memcpy(line + size, itr->data, itr->size);
-		size += itr->size;
-		itr = itr->next;
-	}
-	(void) free_buffer(&buffer);
+	i = 0;
+	line = ft_strchr(buffer, '\n');
+	if (line == NULL)
+		line = ft_strchr(buffer, '\0');
+	i = line - buffer + (*line == '\n');
+	line = (char *) malloc(i + 1);
+	if (line == NULL)
+		return (NULL);
+	ft_memcpy(line, buffer, i);
+	line[i] = '\0';
+	ft_memcpy(buffer, buffer + i, BUFFER_SIZE - i);
+	buffer[BUFFER_SIZE - i] = '\0';
 	return (line);
 }
 
-t_buffer	*create_buffer(void)
+static void	_post_process_buffer_then_append(
+				char **line_ptr,
+				char *buffer)
 {
-	t_buffer	*buffer;
+	char	*nl_ptr;
+	char	tmp;
+	size_t	has_nl;
 
-	buffer = (t_buffer *) malloc(sizeof(t_buffer));
-	if (!buffer)
-		return (NULL);
-	(buffer)->size = 0;
-	(buffer)->next = NULL;
-	return (buffer);
+	has_nl = 0;
+	nl_ptr = ft_strchr(buffer, '\n');
+	if (nl_ptr != NULL)
+	{
+		has_nl = 1;
+		tmp = nl_ptr[1];
+		nl_ptr[1] = '\0';
+	}
+	else
+		nl_ptr = buffer + ft_strlen(buffer);
+	ft_strcat(line_ptr, buffer);
+	if (*line_ptr == NULL)
+		return ;
+	if (has_nl)
+	{
+		nl_ptr[1] = tmp;
+		++nl_ptr;
+	}
+	has_nl = ft_strlen(nl_ptr);
+	ft_memcpy(buffer, nl_ptr, has_nl);
+	buffer[has_nl] = '\0';
 }
 
-char	*get_next_line(int fd)
+static char	*_get_next_line(
+				int fd,
+				char *buffer)
 {
-	t_buffer	*org;
-	t_buffer	**ptr;
-	long		n;
+	char	*line;
+	ssize_t	n;
 
-	ptr = &org;
-	while (1)
+	line = _preprocess_buffer(buffer);
+	if (line == NULL)
+		return (NULL);
+	while (!ft_strchr(line, '\n'))
 	{
-		*ptr = create_buffer();
-		if (!*ptr)
-			return (free_buffer(&org));
-		while (1)
-		{
-			n = read(fd, (*ptr)->data + (*ptr)->size, 1);
-			if (n < 0)
-				return (free_buffer(&org));
-			(*ptr)->size += n;
-			if (n == 0 || (*ptr)->data[(*ptr)->size - n] == '\n')
-				return (compile(org));
-			if ((*ptr)->size == BUFFER_SIZE)
-				break ;
-		}
-		ptr = &(*ptr)->next;
+		n = read(fd, buffer, BUFFER_SIZE);
+		if (n < 0)
+			return (free(line), NULL);
+		buffer[n] = '\0';
+		if (n == 0 || ft_strchr(buffer, '\n'))
+			return (_post_process_buffer_then_append(&line, buffer), line);
+		ft_strcat(&line, buffer);
+		if (line == NULL)
+			return (NULL);
 	}
+	return (line);
+}
+
+char	*get_next_line(
+			int fd)
+{
+	static char	tails[FD_LIMIT][BUFFER_SIZE + 1] = {0};
+	char		*line;
+
+	line = _get_next_line(fd, tails[fd]);
+	if (line == NULL)
+		return (NULL);
+	if (ft_strlen(line) == 0)
+		return (free(line), NULL);
+	return (line);
 }
